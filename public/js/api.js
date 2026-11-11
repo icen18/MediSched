@@ -21,7 +21,6 @@ const Brand = {
     <span class="text-medired">Medi</span><span class="text-mediblue">Sched</span></div></div>`
 };
 
-/* ---------- helpers ---------- */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const homeFor = (role) => (role === 'admin' ? '/admin/dashboard.html' : '/patient/dashboard.html');
 const fmtDate = (at) => new Date(at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -33,7 +32,7 @@ const nowLocalInput = () => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-/* ---------- API ---------- */
+/* API */
 const API = {
   get token() { return localStorage.getItem('ms_token'); },
   get user() { try { return JSON.parse(localStorage.getItem('ms_user')); } catch { return null; } },
@@ -65,7 +64,7 @@ function requireAuth(role) {
   return true;
 }
 
-/* ---------- UI ---------- */
+/* UI */
 const UI = {
   modal(html, { dismissible = true, width = 'max-w-3xl' } = {}) {
     const el = document.createElement('div');

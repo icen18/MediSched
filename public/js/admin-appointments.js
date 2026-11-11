@@ -36,7 +36,7 @@
   const rows = document.getElementById('rows');
   const tabs = document.getElementById('tabs');
 
-  /* ---------- tabs ---------- */
+  // tabs 
   function drawTabs() {
     tabs.innerHTML = ['All', ...STATUSES].map((s) => {
       const on = (s === 'All' ? '' : s) === filter;
@@ -50,7 +50,7 @@
     filter = b.dataset.f; drawTabs(); load();
   });
 
-  /* ---------- sorting ---------- */
+  // sorting 
   document.getElementById('sort').addEventListener('change', (e) => { sortBy = e.target.value; render(); });
 
   const byName = (a, b) => a.patient_name.localeCompare(b.patient_name, undefined, { sensitivity: 'base' });
@@ -59,10 +59,10 @@
     const copy = [...list];
     if (sortBy === 'az') copy.sort(byName);
     else if (sortBy === 'za') copy.sort((a, b) => byName(b, a));
-    return copy; // 'date' = the order from the server (earliest first)
+    return copy;
   }
 
-  /* ---------- table ---------- */
+  // table  
   function render() {
     const data = sorted();
     rows.innerHTML = data.length
@@ -89,7 +89,7 @@
     } catch (e) { UI.toast(e.message); }
   }
 
-  /* ---------- status menu (opens from the ▼ icon only) ---------- */
+  // status menu (opens from the ▼ icon only) 
   let menu = null, menuBtn = null;
 
   function closeMenu() {
@@ -111,7 +111,6 @@
         ${s === current ? 'ring-2 ring-gray-500' : ''}">${s}</button>`).join('');
     document.body.appendChild(menu);
 
-    // position under the icon (flip upward / shift left if there is no room)
     const r = btn.getBoundingClientRect();
     let top = r.bottom + 4;
     let left = r.left;
@@ -136,7 +135,7 @@
   rows.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-menu]');
     if (!btn) return;
-    if (menuBtn === btn) return closeMenu(); // clicking the icon again closes it
+    if (menuBtn === btn) return closeMenu(); 
     openMenu(btn);
   });
 
@@ -147,7 +146,7 @@
   window.addEventListener('resize', closeMenu);
   window.addEventListener('scroll', closeMenu, true);
 
-  /* ---------- add appointment form ---------- */
+  /* add appointment form */
   async function openForm() {
     let patients = [];
     try { patients = await API.get('/api/patients'); } catch (e) { return UI.toast(e.message); }
