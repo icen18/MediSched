@@ -14,7 +14,6 @@ const STATUSES = ['Pending', 'Scheduled', 'Completed', 'Cancelled'];
 router.param('id', (req, res, next, id) =>
   mongoose.isValidObjectId(id) ? next() : res.status(404).json({ error: 'Appointment not found.' }));
 
-// one doctor → one active appointment per time slot
 const hasConflict = async (at, excludeId) =>
   !!(await Appointment.exists({
     appointmentAt: at,
@@ -45,8 +44,7 @@ router.post('/', async (req, res) => {
   if (!reason || reason.length > 255) return res.status(400).json({ error: 'Please enter a reason (max 255 characters).' });
   if (await hasConflict(at)) return res.status(409).json({ error: 'That time slot is already booked.' });
 
-  const a = await Appointment.create({ patient: patientId, appointmentAt: at, reason, status: 'Scheduled' });
-  res.status(201).json({ id: a._id });
+   const a = await Appointment.create({ patient: patientId, appointmentAt: at, reason, status: 'Pending' });
 });
 
 router.patch('/:id/status', async (req, res) => {
