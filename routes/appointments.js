@@ -5,6 +5,7 @@ const Patient = require('../models/Patient');
 const { auth, requireRole } = require('../middleware/auth');
 const { validDateTime } = require('../utils/validate');
 const { toAppointment } = require('../utils/serialize');
+const { DURATIONS, findConflict } = require('../utils/schedule');
 
 const router = express.Router();
 router.use(auth, requireRole('admin'));
@@ -13,13 +14,6 @@ const STATUSES = ['Pending', 'Scheduled', 'Completed', 'Cancelled'];
 
 router.param('id', (req, res, next, id) =>
   mongoose.isValidObjectId(id) ? next() : res.status(404).json({ error: 'Appointment not found.' }));
-
-const hasConflict = async (at, excludeId) =>
-  !!(await Appointment.exists({
-    appointmentAt: at,
-    status: { $in: ['Pending', 'Scheduled'] },
-    ...(excludeId ? { _id: { $ne: excludeId } } : {})
-  }));
 
 router.get('/', async (req, res) => {
   const filter = STATUSES.includes(req.query.status) ? { status: req.query.status } : {};
@@ -37,14 +31,21 @@ router.post('/', async (req, res) => {
   const patientId = String(req.body?.patient_id ?? '');
   const at = String(req.body?.appointment_at ?? '');
   const reason = String(req.body?.reason ?? '').trim();
+  const duration = Number(req.body?.duration || 60);
 
   if (!mongoose.isValidObjectId(patientId) || !(await Patient.exists({ _id: patientId })))
     return res.status(400).json({ error: 'Please select a patient.' });
   if (!validDateTime(at)) return res.status(400).json({ error: 'Please choose a valid date and time.' });
+  if (!DURATIONS.includes(duration)) return res.status(400).json({ error: 'Please choose a valid duration.' });
   if (!reason || reason.length > 255) return res.status(400).json({ error: 'Please enter a reason (max 255 characters).' });
-  if (await hasConflict(at)) return res.status(409).json({ error: 'That time slot is already booked.' });
 
-   const a = await Appointment.create({ patient: patientId, appointmentAt: at, reason, status: 'Pending' });
+  const clash = await findConflict(at, duration);
+  if (clash) return res.status(409).json({ error: `That time overlaps another appointment (${clash}). Please choose a different time.` });
+
+  const a = await Appointment.create({
+    patient: patientId, appointmentAt: at, durationMinutes: duration, reason, status: 'Pending'
+  });
+  res.status(201).json({ id: a._id });
 });
 
 router.patch('/:id/status', async (req, res) => {
@@ -53,8 +54,11 @@ router.patch('/:id/status', async (req, res) => {
 
   const a = await Appointment.findById(req.params.id);
   if (!a) return res.status(404).json({ error: 'Appointment not found.' });
-  if (['Pending', 'Scheduled'].includes(status) && (await hasConflict(a.appointmentAt, a._id)))
-    return res.status(409).json({ error: 'Another appointment already holds that time slot.' });
+
+  if (['Pending', 'Scheduled'].includes(status)) {
+    const clash = await findConflict(a.appointmentAt, a.durationMinutes || 60, a._id);
+    if (clash) return res.status(409).json({ error: `Another appointment already holds this time (${clash}).` });
+  }
 
   a.status = status;
   await a.save();
