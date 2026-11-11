@@ -15,7 +15,6 @@ const toAppointment = (a) => {
     patient_id: p._id,
     patient_name: [p.firstName, p.middleName, p.lastName].filter(Boolean).join(' '),
     appointment_at: a.appointmentAt,
-    duration_minutes: a.durationMinutes || 60,
     reason: a.reason,
     status: a.status
   };

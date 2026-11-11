@@ -3,7 +3,7 @@
   const STATUSES = ['Pending', 'Scheduled', 'Completed', 'Cancelled'];
   let query = '', filter = '', sortBy = 'date';
   let list = [];
-  const endAt = (a) => new Date(new Date(a.appointment_at).getTime() + (a.duration_minutes || 60) * 60000);
+  
 
   const content = Layout.init({
     role: 'admin', active: 'appointments',
@@ -70,7 +70,7 @@
       ? data.map((a) => `
         <tr>
           <td class="font-medium">${esc(a.patient_name)}</td>
-                    <td><div class="font-medium">${fmtDate(a.appointment_at)}</div><div class="text-[11px] text-gray-500">${fmtTime(a.appointment_at)} – ${fmtTime(endAt(a))}</div></td>
+          <td><div class="font-medium">${fmtDate(a.appointment_at)}</div><div class="text-[11px] text-gray-500">${fmtTime(a.appointment_at)}</div></td>
           <td>${esc(a.reason)}</td>
           <td>
             <div class="flex items-center justify-center gap-1.5">
@@ -168,13 +168,7 @@
             <input name="appointment_at" type="datetime-local" min="${nowLocalInput()}" class="input-field mt-1 !rounded-xl"></div>
           <div><label class="font-bold text-sm">Reason</label>
             <input name="reason" maxlength="255" placeholder="Write your reason" class="input-field mt-1 !rounded-xl"></div>
-          <div><label class="font-bold text-sm">Duration</label>
-            <select name="duration" class="input-field mt-1 !rounded-xl">
-              <option value="50">50 minutes</option>
-              <option value="60" selected>1 hour</option>
-              <option value="90">1 hour 30 minutes</option>
-            </select></div>
-          <div class="md:col-span-2 flex items-center justify-end gap-3">
+          <div class="flex items-end justify-end gap-3">
             <button type="button" id="clear-btn" class="btn-ghost">Clear Form</button>
             <button class="btn-primary !rounded-full !text-sm">Save Appointment</button>
           </div>

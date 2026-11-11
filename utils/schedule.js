@@ -1,6 +1,6 @@
 const Appointment = require('../models/Appointment');
 
-const DURATIONS = [50, 60, 90]; // minutes
+const SLOT_MINUTES = 60; // every appointment blocks this much time (change to 30, 45, 90...)
 
 // 'YYYY-MM-DDTHH:mm' -> minutes (no time zone involved)
 const toMin = (at) => {
@@ -20,8 +20,8 @@ const clock = (min) => new Date(min * 60000).toLocaleTimeString('en-US',
 const day = (min) => new Date(min * 60000).toLocaleDateString('en-US',
   { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
-// Returns a readable description of the clashing appointment, or null if the slot is free.
-async function findConflict(at, duration, excludeId) {
+// Returns a readable description of the clashing appointment, or null if the time is free.
+async function findConflict(at, excludeId) {
   const date = at.slice(0, 10);
   const filter = {
     status: { $in: ['Pending', 'Scheduled'] },
@@ -30,14 +30,14 @@ async function findConflict(at, duration, excludeId) {
   if (excludeId) filter._id = { $ne: excludeId };
 
   const start = toMin(at);
-  const end = start + duration;
+  const end = start + SLOT_MINUTES;
 
   for (const a of await Appointment.find(filter).lean()) {
     const s = toMin(a.appointmentAt);
-    const e = s + (a.durationMinutes || 60);
+    const e = s + SLOT_MINUTES;
     if (start < e && end > s) return `${day(s)}, ${clock(s)} – ${clock(e)}`;
   }
   return null;
 }
 
-module.exports = { DURATIONS, findConflict };
+module.exports = { SLOT_MINUTES, findConflict };
